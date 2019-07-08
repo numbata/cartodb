@@ -2,7 +2,7 @@
   <section class="welcome-section" :class="{ 'is-user-notification': isNotificationVisible }">
     <WelcomeFirst v-if="isFirst" :name="name" :userType="userType"></WelcomeFirst>
     <WelcomeCompact v-if="!isFirst" :name="name" :userType="userType">
-      <template v-if="trialEndDate">
+      <template v-if="trialEndDate && showTrialReminder">
         <span v-html="trialTimeLeft" class="title is-small"></span>
         <a class="title is-small" :href="accountUpgradeURL" v-if="accountUpgradeURL">
           {{ $t('HomePage.WelcomeSection.subscribeNow') }}
@@ -30,8 +30,12 @@ export default {
   computed: {
     ...mapState({
       isFirst: state => state.config.isFirstTimeViewingDashboard,
-      accountUpgradeURL: state => state.config.upgrade_url,
-      trialEndDate: state => state.user.trial_ends_at,
+      // accountUpgradeURL: state => state.config.upgrade_url,
+      accountUpgradeURL: state => "/bla",
+      // trialEndDate: state => state.user.trial_ends_at,
+      trialEndDate: state => "2019-07-11T14:08:50.999Z",
+      // showTrialReminder: state => state.user.show_trial_reminder,
+      showTrialReminder: state => false,
       user: state => state.user,
       name: state => state.user.name || state.user.username,
       organization: state => state.user.organization,
