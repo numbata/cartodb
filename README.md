@@ -50,6 +50,13 @@ documentation.
 
 See [our contributing doc](CONTRIBUTING.md) for how you can improve CARTO, but you will need to sign a Contributor License Agreement (CLA) before making a submission, [learn more here](https://carto.com/contributions).
 
+## DockerCompose
+
+    docker-compose build
+    docker-compose run --rm rails bundle exec rake db:migrate sequel:migrate
+    docker-compose run -e EMAIL=example@example.com -e PASSWORD=example -e SUBDOMAIN=example --rm rails bundle exec rake cartodb:db:create_dev_user
+    docker-compose start
+
 ## Testing
 
 Check the [testing doc](TESTING.md) section.

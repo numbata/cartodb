@@ -1,0 +1,23 @@
+*:80
+
+tls off
+log stdout
+errors stderr
+
+gzip
+root /app/public/
+
+rewrite {
+    if {path} is /
+    to /proxy/{uri}
+}
+
+rewrite {
+  to {path} /proxy/{uri}
+}
+
+proxy /proxy http://backend {
+  without /proxy
+  transparent
+  header_upstream X-Forwarded-Proto https
+}

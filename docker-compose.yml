@@ -1,0 +1,89 @@
+version: '3'
+
+services:
+  # The container to proxy all HTTP and HTTP request to container with static
+  proxy:
+    build:
+      context: .
+      dockerfile: deployment/http_proxy/Dockerfile
+    ports:
+      - 0.0.0.0:80:80
+      - 0.0.0.0:443:443
+    volumes:
+      - uploads_data:/uploads
+    environment:
+      CARTODB_DOMAIN: cartodb.localhost.lan
+    depends_on:
+      - assets
+    links:
+      - assets
+  assets: # The container with assets and proxy to the backend
+    image: cartodb-app
+    build:
+      context: .
+      dockerfile: deployment/app/Dockerfile
+    environment: &default_env
+      APP_ENV: production
+      RACK_ENV: production
+      RAILS_ENV: production
+      NODE_ENV: production
+      POSTGRES_USER: cartodb
+      POSTGRES_PASSWORD: cartodb
+      POSTGRES_DB: cartodb
+      DATABASE_URL: postgres://cartodb:cartodb@db/cartodb
+      RAILS_PUBLIC_UPLOADS_PATH: /app/uploads
+      CARTODB_DOMAIN: cartodb.localhost.lan
+      CARTODB_PASSWORD_SECRET: 96f3903532f3119c83199442937ef699b0ec425d0bc7a938624a6ff56b3e6acf9fc71316d2c68ba4f3d23d100bbd4e1b31b3a47051424e4d4f42d3ed09704cfc
+      CARTODB_SECRET_KEY_BASE: 1574f92e90957a2d3e6c9dacd5c8dac587157e8b290792de2dddc7ad7fd9f70b351665201de50580dfbc6cb6462696d4b844b30357dc0ee7a1767b04ea9f4c0e
+      CARTODB_SECRET_TOKEN: cb20d3bfd6c481947984ec368df53784aa2349cde21dc5c771c3a3b5b71bb674
+      CARTODB_SUBDOMAINLESS_URLS: 'true'
+    depends_on:
+      - backend
+    links:
+      - backend
+    volumes:
+      - uploads_data:/uploads
+    command: caddy -conf /etc/caddy/Caddyfile
+  backend: # Rails app
+    image: cartodb-app
+    build:
+      context: .
+      dockerfile: deployment/app/Dockerfile
+    volumes:
+      - uploads_data:/uploads
+    environment: *default_env
+    depends_on:
+      - db
+      - redis
+    links:
+      - redis
+      - db
+    command: unicorn -l 0.0.0.0:80
+  worker:
+    image: cartodb-app
+    build:
+      context: .
+      dockerfile: deployment/app/Dockerfile
+    environment: *default_env
+    depends_on:
+      - db
+      - redis
+    links:
+      - db
+      - redis
+    command: bundle exec script/resque
+  redis:
+    image: redis:4.0-alpine
+    volumes:
+      - redis_data:/data
+  db:
+    build:
+      context: .
+      dockerfile: deployment/postgresql/Dockerfile
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
