@@ -6,6 +6,7 @@ echo "Setup config/app_config.yml"
 ruby <<-EOF
   require 'yaml'
   require 'pathname'
+  require 'uri'
   require 'securerandom'
 
   APP_ROOT = Pathname.new(ENV.fetch('APP_ROOT', '/app'))
@@ -44,6 +45,27 @@ ruby <<-EOF
   config['sql_api']['private']['domain'] = ENV.fetch('CARTODB_SQL_PRIVATE_DOMAIN', CARTODB_DOMAIN)
   config['session_domain'] = ENV.fetch('CARTODB_SESSION_DOMAIN', CARTODB_DOMAIN)
   config['app_assets']['asset_host'] = ENV.fetch('CARTODB_ASSETS_HOST', "//#{CARTODB_DOMAIN}")
+
+  invalidation = ENV['CARTODB_INVALIDATION_SERVICE_URI']
+  if invalidation
+    invalidation_uri = URI(invalidation)
+    config['invalidation_service']['host'] = invalidation_uri.host
+    config['invalidation_service']['port'] = invalidation_uri.port
+  else
+    config.delete 'invalidation_service'
+  end
+
+  sql_api = URI(ENV.fetch('CARTODB_SQL_API_PRIVATE_URI', 'http://${CARTODB_DOMAIN}/api/v1/sql'))
+  config['sql_api']['private']['protocol'] = sql_api.scheme + '://'
+  config['sql_api']['private']['domain'] = sql_api.host
+  config['sql_api']['private']['endpoint'] = sql_api.path
+  config['sql_api']['private']['poty'] = sql_api.port
+
+  sql_api = URI(ENV.fetch('CARTODB_SQL_API_PUBLIC_URI', 'http://${CARTODB_DOMAIN}/api/v2/sql'))
+  config['sql_api']['public']['protocol'] = sql_api.scheme + '://'
+  config['sql_api']['public']['domain'] = sql_api.host
+  config['sql_api']['public']['endpoint'] = sql_api.path
+  config['sql_api']['public']['poty'] = sql_api.port
 
   File.open(APP_ROOT.join('config/app_config.yml'), 'w') { |f| f.write(configs.to_yaml) }
 EOF
