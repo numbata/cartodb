@@ -1,60 +1,67 @@
 # vim:set ft=dockerfile:
-FROM node:10-alpine AS build
+FROM node:10-buster-slim AS build
 
 ARG APP_ENV=production
 ARG MAPS_API_VERSION=7.1.0
+ARG MAPNIK_VERSION=v3.0.22
+ARG MAPNIK_NODE_VERSION=v3.6.2
 
 ENV NODE_ENV=$APP_ENV \
     PATH=$PATH:/vendor/bin \
     APP_ROOT=/app
 
-RUN apk add --no-cache --update python \
-                                py2-pip \
-                                libpq \
-                                nodejs \
-                                tzdata \
-                                freetype \
-                                icu-libs \
-                                libjpeg \
-                                libpng \
-                                libc6-compat \
-                                pango \
-                                curl \
-                                giflib-dev \
-                                cairo \
-                                boost \
-                                boost-program_options \
-                                ca-certificates
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+      libpixman-1-0 libpixman-1-dev \
+      libcairo2-dev libjpeg-dev libgif-dev libpango1.0-dev \
+      git \
+      libpq5 \
+      g++ \
+      libsqlite3-dev \
+      python \
+      make \
+      libgdal-dev \
+      libboost-filesystem-dev \
+      libboost-program-options-dev \
+      libboost-python-dev libboost-regex-dev \
+      libboost-system-dev libboost-thread-dev \
+      libicu-dev \
+      python-dev libxml2 libxml2-dev \
+      libfreetype6 libfreetype6-dev \
+      libjpeg-dev \
+      libpng-dev \
+      libproj-dev \
+      libtiff-dev \
+      libcairo2-dev python-cairo-dev \
+      libcairomm-1.0-dev \
+      build-essential python-nose \
+      python-gdal \
+      libharfbuzz-dev \
+      postgresql-server-dev-11 postgresql-contrib postgresql-11-postgis-2.5-scripts \
+      libmapnik-dev libmapnik3.0 mapnik-vector-tile python3-mapnik \
+      node-mapnik
 
-RUN apk add --no-cache --update --virtual .buildeps \
-                                build-base \
-                                git \
-                                bash \
-                                g++ \
-                                boost-dev \
-                                freetype-dev \
-                                icu-dev \
-                                libjpeg-turbo-dev \
-                                libpng-dev \
-                                zlib-dev \
-                                libxml2-dev \
-                                harfbuzz-dev \
-                                cairo-dev \
-                                pango-dev \
-                                postgresql-dev
+# RUN git clone https://github.com/mapnik/node-mapnik.git /usr/src/node-mapnik && \
+#     cd /usr/src/node-mapnik && \
+#     git reset --hard $MAPNIK_NODE_VERSION && \
+#     git submodule update --init
+#     make release
 
 RUN git clone -b $MAPS_API_VERSION -- https://github.com/CartoDB/Windshaft-cartodb.git /app && \
     cd /app && \
     npm config set loglevel info && \
     npm install --verbose
-
-RUN apk del .buildeps
-
+#     npm install gdal --build-from-source --shared_gdal
+#
+# RUN apk del .buildeps && \
+#     rm -rf /usr/src/mapnik
+#
 WORKDIR /app
 
-COPY deployment/sql_api/docker-entrypoint.sh /usr/local/bin/
+COPY deployment/maps_api/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
+#
+EXPOSE 8081
 EXPOSE 80
 
 ENTRYPOINT ["docker-entrypoint.sh"]

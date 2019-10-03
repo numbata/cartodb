@@ -9,15 +9,32 @@ root /app/public/
 
 rewrite {
     if {path} is /
-    to /proxy/{uri}
+    to /proxy_backend/{uri}
+}
+
+rewrite /uploads {
+  r /
+  to {$ENV_RAILS_PUBLIC_UPLOADS_PATH}/{1}
 }
 
 rewrite {
-  to {path} /proxy/{uri}
+  if {host} not_has mapsapi
+  to {path} /proxy_backend/{uri}
 }
 
-proxy /proxy http://backend {
-  without /proxy
+rewrite {
+  if {host} has mapsapi
+  to /proxy_mapsapi/{uri}
+}
+
+proxy /proxy_backend http://backend {
+  without /proxy_backend
+  transparent
+  header_upstream X-Forwarded-Proto https
+}
+
+proxy /proxy_mapsapi http://mapsapi {
+  without /proxy_mapsapi
   transparent
   header_upstream X-Forwarded-Proto https
 }

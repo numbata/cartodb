@@ -36,6 +36,8 @@ RUN apk add --no-cache --update build-base \
                                 icu-dev \
                                 curl \
                                 ca-certificates && \
+    apk add --repository http://nl.alpinelinux.org/alpine/edge/testing --no-cache gdal \
+                                                                                  proj-dev && \
     gem install --no-document compass && \
     mkdir -p config && \
     ARCH=$(apk --print-arch | sed 's/x86_64/amd64/') && \
@@ -91,7 +93,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
     bundle --deployment --path /vendor/ --without development test
 
 COPY /deployment/app/Caddyfile /etc/caddy/
-
+COPY /deployment/app/monkey_patches.rb /app/config/initializers/zz_monkey_patches.rb
 VOLUME /uploads
 
 EXPOSE 80

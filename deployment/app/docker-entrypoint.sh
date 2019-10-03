@@ -38,13 +38,26 @@ ruby <<-EOF
   config['layer_opts']['data']['options']['sql_domain'] = ENV.fetch('CARTODB_SQL_DOMAIN', CARTODB_DOMAIN)
   config['cartodb_central_domain_name'] = ENV.fetch('CARTODB_CENTRAL_DOMAN', CARTODB_DOMAIN)
   config['redis']['host'] = ENV.fetch('REDIS_HOST', 'redis')
-  config['tiler']['public']['domain'] = ENV.fetch('CARTODB_TILER_DOMAIN', CARTODB_DOMAIN)
-  config['tiler']['internal']['domain'] = ENV.fetch('CARTODB_TILER_INTERNAL_DOMAIN', CARTODB_DOMAIN)
-  config['tiler']['private']['domain'] = ENV.fetch('CARTODB_TILER_PRIVATE_DOMAIN', CARTODB_DOMAIN)
-  config['sql_api']['public']['domain'] = ENV.fetch('CARTODB_SQL_DOMAIN', CARTODB_DOMAIN)
-  config['sql_api']['private']['domain'] = ENV.fetch('CARTODB_SQL_PRIVATE_DOMAIN', CARTODB_DOMAIN)
   config['session_domain'] = ENV.fetch('CARTODB_SESSION_DOMAIN', CARTODB_DOMAIN)
   config['app_assets']['asset_host'] = ENV.fetch('CARTODB_ASSETS_HOST', "//#{CARTODB_DOMAIN}")
+
+  tiler_internal_uri = URI(ENV['CARTODB_TILER_INTERNAL_URI'] || 'http://${CARTODB_DOMAIN}:8081')
+  config['tiler']['internal']['domain'] = tiler_internal_uri.host
+  config['tiler']['internal']['host'] = tiler_internal_uri.host
+  config['tiler']['internal']['protocol'] = tiler_internal_uri.scheme
+  config['tiler']['internal']['port'] = tiler_internal_uri.port
+
+  tiler_private_uri = URI(ENV['CARTODB_TILER_PRIVATE_URI'] || 'http://${CARTODB_DOMAIN}:8081')
+  config['tiler']['private']['domain'] = tiler_private_uri.host
+  config['tiler']['private']['host'] = tiler_private_uri.host
+  config['tiler']['private']['protocol'] = tiler_private_uri.scheme
+  config['tiler']['private']['port'] = tiler_private_uri.port
+
+  tiler_public_uri = URI(ENV['CARTODB_TILER_PUBLIC_URI'] || 'http://${CARTODB_DOMAIN}:8081')
+  config['tiler']['public']['domain'] = tiler_public_uri.host
+  config['tiler']['public']['host'] = tiler_public_uri.host
+  config['tiler']['public']['protocol'] = tiler_public_uri.scheme
+  config['tiler']['public']['port'] = tiler_public_uri.port
 
   invalidation = ENV['CARTODB_INVALIDATION_SERVICE_URI']
   if invalidation
@@ -67,7 +80,17 @@ ruby <<-EOF
   config['sql_api']['public']['endpoint'] = sql_api.path
   config['sql_api']['public']['poty'] = sql_api.port
 
-  File.open(APP_ROOT.join('config/app_config.yml'), 'w') { |f| f.write(configs.to_yaml) }
+  uploads_path = ENV['RAILS_PUBLIC_UPLOADS_PATH']
+  if uploads_path
+    config['exporter']['uploads_path'] = uploads_path if config['exporter']
+    config['importer']['uploads_path'] = uploads_path if config['importer']
+    config['user_migrator']['uploads_path'] = uploads_path if config['user_migrator']
+  end
+
+  config['metrics']['hubspot']['token'] = ENV['HUBSPOT_TOKEN']
+  config['metrics']['hubspot']['events_host'] = ENV.fetch('HUBSPOT_URL', 'http://track.hubspot.com')
+
+  File.open(APP_ROOT.join('config/app_config.yml'), 'w') { |f| f.write({'production' => config}.to_yaml) }
 EOF
 
 echo "Setup config/database.yml"
