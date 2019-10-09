@@ -1,5 +1,6 @@
 # vim:set ft=dockerfile:
-FROM node:10-alpine AS build
+
+FROM osgeo/gdal:alpine-small-latest AS base
 
 ARG CADDY_PLUGINS=http.cors,http.minify
 
@@ -20,7 +21,7 @@ ENV RAILS_ENV=production \
 
 WORKDIR /app
 
-RUN apk add --no-cache --update build-base \
+RUN apk add --no-cache --upgrade build-base \
                                 git \
                                 python \
                                 py2-pip \
@@ -31,17 +32,18 @@ RUN apk add --no-cache --update build-base \
                                 ruby-etc \
                                 postgresql-dev \
                                 nodejs \
+                                npm \
                                 tzdata \
                                 git \
                                 icu-dev \
                                 curl \
+                                zlib-dev \
+                                linux-headers \
                                 ca-certificates && \
-    apk add --repository http://nl.alpinelinux.org/alpine/edge/testing --no-cache gdal \
-                                                                                  proj-dev && \
     gem install --no-document compass && \
     mkdir -p config && \
     ARCH=$(apk --print-arch | sed 's/x86_64/amd64/') && \
-    curl -sfSL "https://caddyserver.com/download/linux/$ARCH?plugins=$CADDY_PLUGINS&license=personal&telemetry=off" | tar -xz -C /tmp && \
+    curl -sfSL "https://caddyserver.com/download/linux/${ARCH}?plugins=${CADDY_PLUGINS}&license=personal&telemetry=off" | tar -xz -C /tmp && \
     mv /tmp/caddy /usr/bin/caddy
 
 COPY package.json ./package.json
@@ -78,13 +80,12 @@ COPY public ./public/
 RUN npm run carto-node && \
     npm run build:static
 
+# TODO: Replace by checkout repo
 COPY .git ./.git
 
 RUN ./node_modules/grunt-cli/bin/grunt --environment=production
 
 COPY Gemfile Gemfile.lock config.ru package.json Rakefile ./
-
-RUN apk add --no-cache zlib-dev linux-headers
 
 COPY deployment/app/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \

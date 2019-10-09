@@ -51,6 +51,8 @@ RUN set -ex && \
     apk del .fetch-deps && \
     ln -sf /dev/stdout /var/log/postgresql/postgresql.log
 
+RUN apk add --repository http://nl.alpinelinux.org/alpine/edge/testing --no-cache --update proj-dev
+
 COPY deployment/postgresql/docker-entrypoint.sh /usr/local/bin/
 COPY deployment/postgresql/pg_hba.conf /tmp/pg_hba.conf
 RUN  chmod +x /usr/local/bin/docker-entrypoint.sh && \

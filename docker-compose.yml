@@ -21,7 +21,9 @@ x-environment: &default_env
   CARTODB_SUBDOMAINLESS_URLS: 'true'
   CARTODB_TILER_INTERNAL_URI: 'http://mapsapi:80'
   CARTODB_TILER_PRIVATE_URI: 'http://mapsapi.cartodb.localhost.lan:80'
-  CARTODB_TILER_PUBLIC_URI: 'http://mapsapi.cartodb.localhost.lan:80'
+  CARTODB_TILER_PUBLIC_URI: 'https://mapsapi.cartodb.localhost.lan'
+  CARTODB_SQL_API_PUBLIC_URI: 'https://sqlapi.cartodb.localhost.lan'
+  CARTODB_SQL_API_PRIVATE_URI: 'http://sqlapi'
   # CARTODB_INVALIDATION_SERVICE_URI: redis://redis:6379/
 
 services:
@@ -69,6 +71,7 @@ services:
     links:
       - redis
       - db
+      - sqlapi
       - mapsapi
     command: unicorn -l 0.0.0.0:80
   worker:
@@ -82,9 +85,11 @@ services:
     depends_on:
       - db
       - redis
+      - mapsapi
     links:
       - db
       - redis
+      - sqlapi
       - mapsapi
     command: bundle exec script/resque
   sqlapi:

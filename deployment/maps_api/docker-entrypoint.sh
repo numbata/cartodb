@@ -211,7 +211,7 @@ var config = {
         cache_basedir: '/home/ubuntu/tile_assets/'
     }
     ,redis: {
-        host: '127.0.0.1',
+        host: '${REDIS_HOST}',
         port: 6379,
         // Max number of connections in each pool.
         // Users will be put on a queue when the limit is hit.

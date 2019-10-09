@@ -19,12 +19,18 @@ rewrite /uploads {
 
 rewrite {
   if {host} not_has mapsapi
+  if {host} not_has sqlapi
   to {path} /proxy_backend/{uri}
 }
 
 rewrite {
   if {host} has mapsapi
   to /proxy_mapsapi/{uri}
+}
+
+rewrite {
+  if {host} has sqlapi
+  to /proxy_sqlapi/{uri}
 }
 
 proxy /proxy_backend http://backend {
@@ -35,6 +41,12 @@ proxy /proxy_backend http://backend {
 
 proxy /proxy_mapsapi http://mapsapi {
   without /proxy_mapsapi
+  transparent
+  header_upstream X-Forwarded-Proto https
+}
+
+proxy /proxy_sqlapi http://sqlapi {
+  without /proxy_sqlapi
   transparent
   header_upstream X-Forwarded-Proto https
 }

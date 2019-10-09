@@ -33,6 +33,7 @@ ruby <<-EOF
       'admin1' => 'global_province_polygons'
     }
   }
+  config['common_data']['base_url'] = '//#{CARTODB_DOMAIN}/'
   config['error_track']['url'] = "#{CARTODB_DOMAIN}/api/v1/sql"
   config['layer_opts']['data']['options']['tiler_domain'] = ENV.fetch('CARTODB_TILER_DOMAIN', CARTODB_DOMAIN)
   config['layer_opts']['data']['options']['sql_domain'] = ENV.fetch('CARTODB_SQL_DOMAIN', CARTODB_DOMAIN)
@@ -69,16 +70,16 @@ ruby <<-EOF
   end
 
   sql_api = URI(ENV.fetch('CARTODB_SQL_API_PRIVATE_URI', 'http://${CARTODB_DOMAIN}/api/v1/sql'))
-  config['sql_api']['private']['protocol'] = sql_api.scheme + '://'
+  config['sql_api']['private']['protocol'] = sql_api.scheme
   config['sql_api']['private']['domain'] = sql_api.host
   config['sql_api']['private']['endpoint'] = sql_api.path
-  config['sql_api']['private']['poty'] = sql_api.port
+  config['sql_api']['private']['port'] = sql_api.port
 
   sql_api = URI(ENV.fetch('CARTODB_SQL_API_PUBLIC_URI', 'http://${CARTODB_DOMAIN}/api/v2/sql'))
-  config['sql_api']['public']['protocol'] = sql_api.scheme + '://'
+  config['sql_api']['public']['protocol'] = sql_api.scheme
   config['sql_api']['public']['domain'] = sql_api.host
   config['sql_api']['public']['endpoint'] = sql_api.path
-  config['sql_api']['public']['poty'] = sql_api.port
+  config['sql_api']['public']['port'] = sql_api.port
 
   uploads_path = ENV['RAILS_PUBLIC_UPLOADS_PATH']
   if uploads_path
